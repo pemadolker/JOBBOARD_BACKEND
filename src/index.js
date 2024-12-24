@@ -20,9 +20,9 @@ app.get('/', (c) => {
 app.post('/signup', async (c) => {
   try {
     const { 
-      email, password, role, name, company_name, company_description, company_logo, 
-      website_url, contact_number, resume, portfolio_url, skills, work_experience, 
-      education, linkedin_url 
+      email, password, role, name, company_name, company_description, 
+      website_url, contact_number, resume, portfolio_url, skills, 
+      education, location 
     } = await c.req.json();
 
     // Step 1: Create user in Supabase Auth
@@ -40,12 +40,12 @@ app.post('/signup', async (c) => {
     const { data: userData, error: userInsertError } = await supabase
       .from('users')
       .insert({
-        name,
         email,
         password, // Optional: Store encrypted passwords instead of plain text
         role,
+        name: role === 'employer' ? null : name, // Insert 'name' only for job seekers
       })
-      .select() // Ensure we get the newly inserted user
+      .select()
       .single();
 
     if (userInsertError) {
@@ -62,9 +62,9 @@ app.post('/signup', async (c) => {
         .insert({
           company_name,
           company_description,
-          company_logo,
           website_url,
           contact_number,
+          location,
           user_id: userId, // Use the correct user_id from 'users'
         });
 
@@ -79,10 +79,9 @@ app.post('/signup', async (c) => {
           resume,
           portfolio_url,
           skills,
-          work_experience,
           education,
-          linkedin_url,
           contact_number,
+          location,
           user_id: userId, // Use the correct user_id from 'users'
         });
 
@@ -99,7 +98,6 @@ app.post('/signup', async (c) => {
     return c.json({ error: error.message }, 500);
   }
 });
-
 
 // Signin Endpoint
 app.post('/signin', async (c) => {
@@ -126,14 +124,12 @@ app.post('/signin', async (c) => {
 
 // Handle Email Confirmation (Redirect after signup)
 app.get('/auth/callback', async (c) => {
-  // Assuming the user is authenticated (check if the user is logged in)
   const { user } = await supabase.auth.getUser();
   
   if (!user) {
     return c.json({ error: 'User not authenticated' }, 400);
   }
 
-  // Fetch the user's role from the 'users' table
   const { data: userData, error: fetchError } = await supabase
     .from('users')
     .select('role')
@@ -144,7 +140,6 @@ app.get('/auth/callback', async (c) => {
     return c.json({ error: 'User not found' }, 404);
   }
 
-  // Redirect to the respective dashboard based on the role
   if (userData.role === 'employer') {
     return c.redirect('/employer/dashboard');
   } else if (userData.role === 'job_seeker') {
@@ -155,11 +150,11 @@ app.get('/auth/callback', async (c) => {
 });
 
 // Define the port
-const port = 8080;
+const port = 8000;
 console.log(`Server is running on http://localhost:${port}`);
 
 // Use the serve function to start the server
 serve({
   fetch: app.fetch,
   port,
-})
+});
