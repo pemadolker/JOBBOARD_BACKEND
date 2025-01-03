@@ -151,6 +151,30 @@ app.get('/auth/callback', async (c) => {
   }
 });
 
+app.get('/seeker/dashboard/jobrecommendations', async (c) => {
+  try {
+    const { user } = await supabase.auth.getUser();
+
+    if (!user) {
+      return c.json({ error: 'User not authenticated' }, 400);
+    }
+
+    const { data: jobRecommendations, error: fetchError } = await supabase
+      .from('job_postings')
+      .select()
+
+    if (fetchError) {
+      console.log("Couldn't fetch job recommendations:", fetchError.message);
+      return c.json({ error: fetchError.message }, 400);
+    }
+
+    return c.json({ jobRecommendations });
+  } catch (error) {
+    console.error("Error during job recommendations fetch:", error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Define the port
 const port = 8000;
 console.log(`Server is running on http://localhost:${port}`);
