@@ -2,11 +2,13 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { cors } from 'hono/cors'
 
 dotenv.config();
 
 // Initialize Hono app
 const app = new Hono();
+app.use('*', cors());
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
