@@ -190,12 +190,11 @@ app.get('/auth/callback', async (c) => {
   }
 });
 
-app.get('/seeker/dashboard/jobrecommendations', async (c) => {
+app.get('/dashboard/seekerdashboard/jobrecommendations', async (c) => {
   try {
     const { user } = await supabase.auth.getUser();
 
-    if (!user) {
-      return c.json({ error: 'User not authenticated' }, 400);
+    if (!user) {      return c.json({ error: 'User not authenticated' }, 400);
     }
 
     const { data: jobRecommendations, error: fetchError } = await supabase
@@ -213,6 +212,67 @@ app.get('/seeker/dashboard/jobrecommendations', async (c) => {
     return c.json({ error: error.message }, 500);
   }
 });
+
+app.use('dashboard/seekerdashboard/profile', async (c, next) => {
+  try {
+    const { user } = await supabase.auth.getUser();
+
+    if (!user) {
+      return c.json({ error: 'User not authenticated' }, 401);
+    }
+
+    if (c.req.method === 'GET') {
+      // Handle fetching the user's profile data (viewing)
+      const { data, error } = await supabase
+        .from('job_seekers')
+        .select('resume, portfolio_url, skills, education, contact_number, location')
+        .eq('user_id', user.id)
+        .single(); 
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return c.json({ error: error.message }, 500);
+      }
+
+      // Return the profile data to the user
+      return c.json({ profile: data });
+    }
+
+    if (c.req.method === 'POST' || c.req.method === 'PUT') {
+      // Handle updating the user's profile data
+      const { resume, portfolio_url, skills, education, contact_number, location } = await c.req.json();
+
+      const { data, error } = await supabase
+        .from('job_seekers')
+        .upsert({
+          user_id: user.id, // Ensure we're updating the right record
+          resume,
+          portfolio_url,
+          skills,
+          education,
+          contact_number,
+          location,
+        });
+
+      if (error) {
+        console.error("Error updating profile:", error);
+        return c.json({ error: error.message }, 500);
+      }
+
+      // Return the updated profile data
+      return c.json({ profile: data });
+    }
+
+    // If the request method is not recognized, return an error
+    return c.json({ error: 'Invalid request method' }, 405);
+
+  } catch (error) {
+    console.error("Error during profile handling:", error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+
 
 // Define the port
 const port = 8000;
