@@ -131,7 +131,6 @@ if (role === 'employer') {
 // Endpoint for user signin
 app.post('/signin', async (c) => {
   try {
-    // Parse the request body for email and password
     const { email, password } = await c.req.json();
 
     // Authenticate user with Supabase
@@ -146,14 +145,19 @@ app.post('/signin', async (c) => {
       return c.json({ error: signinError.message }, 400);
     }
 
+    // Check if email is confirmed
+    if (!user.email_confirmed_at) {
+      return c.json({ error: 'Please confirm your email before signing in.' }, 400);
+    }
+
     // Return success response with user details
     return c.json({ message: 'User signed in successfully', user });
   } catch (error) {
-    // Handle unexpected errors
     console.error("Error during signin:", error);
     return c.json({ error: error.message }, 500);
   }
 });
+
 
 // Endpoint to handle email confirmation and redirect users based on role
 app.get('/auth/callback', async (c) => {
