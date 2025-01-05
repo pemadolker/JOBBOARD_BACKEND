@@ -175,6 +175,27 @@ app.get('/seeker/dashboard/jobrecommendations', async (c) => {
   }
 });
 
+app.use('seeker/dashboard/update-profile', async (c, next) => {
+  const user = await supabase.auth.api
+  try {
+    const { user } = await supabase.auth.getUser();
+
+    if (!user) {
+      return c.json({ error: 'User not authenticated' }, 400);
+    }
+
+    if (fetchError) {
+      console.log("Couldn't fetch user data:", fetchError.message);
+      return c.json({ error: fetchError.message }, 400);
+    }
+
+    c.user = userData;
+    return next();
+  } catch (error) {
+    console.error("Error during user data fetch:", error);
+    return c.json({ error: error.message }, 500);
+  }});
+
 // Define the port
 const port = 8000;
 console.log(`Server is running on http://localhost:${port}`);
