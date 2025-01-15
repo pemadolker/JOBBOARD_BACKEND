@@ -189,17 +189,18 @@ app.get('/auth/callback', async (c) => {
     return c.json({ error: 'Invalid role' }, 400);
   }
 });
-
-app.get('/dashboard/seekerdashboard/jobrecommendations', async (c) => {
+//dashboard job recommendations for the seekers
+app.get('/dashboard/seekerdashboard/jobs', async (c) => {
   try {
     const { user } = await supabase.auth.getUser();
 
-    if (!user) {      return c.json({ error: 'User not authenticated' }, 400);
+    if (!user) {
+      return c.json({ error: 'User not authenticated' }, 400);
     }
 
     const { data: jobRecommendations, error: fetchError } = await supabase
       .from('job_postings')
-      .select()
+      .select();
 
     if (fetchError) {
       console.log("Couldn't fetch job recommendations:", fetchError.message);
@@ -213,7 +214,8 @@ app.get('/dashboard/seekerdashboard/jobrecommendations', async (c) => {
   }
 });
 
-app.use('dashboard/seekerdashboard/profile', async (c, next) => {
+// endpoint for handling the profile updating and fetching for the job seekers
+app.use('/dashboard/seekerDashboard/profile', async (c, next) => {
   try {
     const { user } = await supabase.auth.getUser();
 
@@ -225,9 +227,9 @@ app.use('dashboard/seekerdashboard/profile', async (c, next) => {
       // Handle fetching the user's profile data (viewing)
       const { data, error } = await supabase
         .from('job_seekers')
-        .select('resume, portfolio_url, skills, education, contact_number, location')
+        .select('resume, portfolio_url, skills,work_experience, education, contact_number, location')
         .eq('user_id', user.id)
-        .single(); 
+        .single();
 
       if (error) {
         console.error("Error fetching profile:", error);
@@ -249,6 +251,7 @@ app.use('dashboard/seekerdashboard/profile', async (c, next) => {
           resume,
           portfolio_url,
           skills,
+          work_experience,
           education,
           contact_number,
           location,
