@@ -157,8 +157,20 @@ app.post('/signin', async (c) => {
       return c.json({ error: 'Please confirm your email before signing in.' }, 400);
     }
 
-    // Return success response with user details
-    return c.json({ message: 'User signed in successfully', user });
+    // Fetch the user's role
+    const { data: userData, error: roleFetchError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('email', email)
+      .single();
+
+    if (roleFetchError || !userData) {
+      console.log("Role fetch error:", roleFetchError?.message || "User not found");
+      return c.json({ error: 'Unable to fetch user role' }, 500);
+    }
+
+    // Return success response with the role
+    return c.json({ message: 'User signed in successfully', role: userData.role });
   } catch (error) {
     console.error("Error during signin:", error);
     return c.json({ error: error.message }, 500);
