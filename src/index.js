@@ -29,14 +29,24 @@ app.use('*', async (c, next) => {
 app.get('/', (c) => {
   return c.text('Welcome to JobBoard!');
 });
-
 // Endpoint for user signup
 app.post('/signup', async (c) => {
   try {
-    const { 
-      email, password, role, name, company_name, company_description, 
-      website_url, contact_number, resume, portfolio_url, skills, 
-      education, location 
+    const {
+      email,
+      password,
+      role,
+      name,
+      company_name,
+      company_description,
+      website_url,
+      contact_number,
+      resume, // Base64 encoded file (not required at signup)
+      portfolio_url,
+      skills,
+      education,
+      work_experience,
+      location,
     } = await c.req.json();
 
     // Determine the name for the users table
@@ -58,9 +68,9 @@ app.post('/signup', async (c) => {
       .from('users')
       .insert({
         email,
-        password, 
+        password,
         role,
-        name: userName, // Store company_name as name for employers
+        name: userName,
       })
       .select()
       .single();
@@ -70,59 +80,56 @@ app.post('/signup', async (c) => {
       return c.json({ error: userInsertError.message }, 400);
     }
 
-    const userId = userData.user_id; // Get the user ID for additional inserts
+    const userId = userData.user_id;
 
- // Step 3: Insert role-specific details
-if (role === 'employer') {
-  // Insert employer-specific data into the 'employers' table
-  const { error: employerError, data: employerData } = await supabase
-    .from('employers')
-    .insert({
-      company_name,
-      company_description,
-      website_url,
-      contact_number,
-      location,
-      user_id: userId, // Foreign key linking to 'users'
-    })
-    .select()
-    .single();
+    if (role === 'job_seeker') {
+      // Insert job seeker-specific data into the 'job_seekers' table with null resume initially
+      const { error: jobSeekerError, data: jobSeekerData } = await supabase
+        .from('job_seekers')
+        .insert({
+          resume: null, // Leave the resume as null initially
+          portfolio_url,
+          skills,
+          education,
+          work_experience,
+          contact_number,
+          location,
+          user_id: userId,
+        })
+        .select()
+        .single();
 
-  if (employerError) {
-    console.log("Employer insert error:", employerError.message);
-    return c.json({ error: employerError.message }, 400);
-  }
+      if (jobSeekerError) {
+        console.log("Job seeker insert error:", jobSeekerError.message);
+        return c.json({ error: jobSeekerError.message }, 400);
+      }
 
-  console.log("Employer data inserted:", employerData); // Log employer data
-} else if (role === 'job_seeker') {
-  // Insert job seeker-specific data into the 'job_seekers' table
-  const { error: jobSeekerError, data: jobSeekerData } = await supabase
-    .from('job_seekers')
-    .insert({
-      resume,
-      portfolio_url,
-      skills,
-      education,
-      contact_number,
-      location,
-      user_id: userId, // Foreign key linking to 'users'
-    })
-    .select()
-    .single();
+      console.log("Job seeker data inserted:", jobSeekerData);
+    } else if (role === 'employer') {
+      // Insert employer-specific data into the 'employers' table
+      const { error: employerError, data: employerData } = await supabase
+        .from('employers')
+        .insert({
+          company_name,
+          company_description,
+          website_url,
+          contact_number,
+          location,
+          user_id: userId,
+        })
+        .select()
+        .single();
 
-  if (jobSeekerError) {
-    console.log("Job seeker insert error:", jobSeekerError.message);
-    return c.json({ error: jobSeekerError.message }, 400);
-  }
+      if (employerError) {
+        console.log("Employer insert error:", employerError.message);
+        return c.json({ error: employerError.message }, 400);
+      }
 
-  console.log("Job seeker data inserted:", jobSeekerData); // Log job seeker data
-}
+      console.log("Employer data inserted:", employerData);
+    }
 
-
-    // Return success response if everything works
     return c.json({ message: 'User created successfully!', user: userData });
   } catch (error) {
-    // Handle unexpected errors
     console.error("Error during signup:", error);
     return c.json({ error: error.message }, 500);
   }
@@ -184,11 +191,12 @@ app.get('/auth/callback', async (c) => {
   if (userData.role === 'employer') {
     return c.redirect('http://localhost:3000/employer');
   } else if (userData.role === 'job_seeker') {
-    return c.redirect('http://localhost:3000/dashboard/seekerdashboard');
+    return c.redirect('http://localhost:3000/dashboard/seekerDashboard');
   } else {
     return c.json({ error: 'Invalid role' }, 400);
   }
 });
+
 //dashboard job recommendations for the seekers
 app.get('/dashboard/seekerdashboard/jobs', async (c) => {
   try {
@@ -276,8 +284,7 @@ app.use('/dashboard/seekerDashboard/profile', async (c, next) => {
 });
 
 
-
-// Define the port
+// Define the port for the server
 const port = 8000;
 console.log(`Server is running on http://localhost:${port}`);
 
