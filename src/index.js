@@ -295,6 +295,46 @@ app.use('/dashboard/seekerDashboard/profile', async (c, next) => {
   }
 });
 
+app.post('/employer/jobs', async (c) => {
+  try {
+    const jobData = await c.req.json();
+
+    // Find the employer ID based on the job data (assuming `em_id` is provided in the request)
+    const { em_id } = jobData;
+
+    if (!em_id) {
+      return c.json({ error: 'Employer ID is required' }, 400);
+    }
+
+    // Insert new job posting
+    const { error: jobError } = await supabase
+      .from('job_postings')
+      .insert({
+        ...jobData,
+        em_id: em_id,
+        status: 'open',
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+    if (jobError) {
+      console.error('Error creating job posting:', jobError.message);
+      return c.json({ error: jobError.message }, 500);
+    }
+
+    return c.json({ message: 'Job posted successfully!' });
+  } catch (error) {
+    console.error('Error during job posting:', error.message);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+
+
+
+
+
+
 
 // Define the port for the server
 const port = 8000;
