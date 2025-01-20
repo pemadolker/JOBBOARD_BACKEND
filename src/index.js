@@ -299,7 +299,7 @@ app.post('/employer/jobs', async (c) => {
   try {
     const jobData = await c.req.json();
 
-    // Find the employer ID based on the job data (assuming `em_id` is provided in the request)
+    // Find the employer ID based on the job data (assuming em_id is provided in the request)
     const { em_id } = jobData;
 
     if (!em_id) {
@@ -329,13 +329,6 @@ app.post('/employer/jobs', async (c) => {
   }
 });
 
-
-
-
-
-
-
-
 // Define the port for the server
 const port = 8000;
 console.log(`Server is running on http://localhost:${port}`);
@@ -344,4 +337,4 @@ console.log(`Server is running on http://localhost:${port}`);
 serve({
   fetch: app.fetch, // Use Hono's fetch handler
   port,
-});
+}); 
