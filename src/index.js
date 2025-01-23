@@ -299,11 +299,14 @@ app.post('/employer/jobs', async (c) => {
   try {
     const jobData = await c.req.json();
 
-    // Find the employer ID based on the job data (assuming em_id is provided in the request)
-    const { em_id } = jobData;
+    const { em_id, applicationDeadline } = jobData;
 
     if (!em_id) {
       return c.json({ error: 'Employer ID is required' }, 400);
+    }
+
+    if (!applicationDeadline) {
+      return c.json({ error: 'Application deadline is required' }, 400);
     }
 
     // Insert new job posting
@@ -312,6 +315,7 @@ app.post('/employer/jobs', async (c) => {
       .insert({
         ...jobData,
         em_id: em_id,
+        application_deadline: applicationDeadline, // Correct field name for database
         status: 'open',
         created_at: new Date(),
         updated_at: new Date(),
@@ -328,6 +332,8 @@ app.post('/employer/jobs', async (c) => {
     return c.json({ error: error.message }, 500);
   }
 });
+
+
 
 // Define the port for the server
 const port = 8000;
