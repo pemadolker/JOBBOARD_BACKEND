@@ -191,6 +191,45 @@ app.post('/signin', async (c) => {
     return c.json({ error: error.message }, 500);
   }
 });
+// Endpoint to post a job
+app.post('/employer/jobs', async (c) => {
+  try {
+    const jobData = await c.req.json();
+
+    const { em_id, application_deadline } = jobData;
+
+    if (!em_id) {
+      return c.json({ error: 'Employer ID is required' }, 400);
+    }
+
+    if (!application_deadline) {
+      return c.json({ error: 'Application deadline is required' }, 400);
+    }
+
+    // Insert new job posting
+    const { error: jobError } = await supabase
+      .from('job_postings')
+      .insert({
+        ...jobData,
+        em_id: em_id,
+        application_deadline: application_deadline, // Correct field name for database
+        status: 'open',
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+    if (jobError) {
+      console.error('Error creating job posting:', jobError.message);
+      return c.json({ error: jobError.message }, 500);
+    }
+
+    return c.json({ message: 'Job posted successfully!' });
+  } catch (error) {
+    console.error('Error during job posting:', error.message);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 
 // Protected route to get user profile
 app.get('/profile', authenticate, async (c) => {
