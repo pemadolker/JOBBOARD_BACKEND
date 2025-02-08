@@ -269,9 +269,29 @@ app.get('/auth/callback', async (c) => {
   if (userData.role === 'employer') {
     return c.redirect('http://localhost:3000/employer');
   } else if (userData.role === 'job_seeker') {
-    return c.redirect('http://localhost:3000/dashboard/seekerDashboard');
+    return c.redirect('http://localhost:3000/dashboard/seekerDashboard/jobs');
   } else {
     return c.json({ error: 'Invalid role' }, 400);
+  }
+});
+
+//dashboard job recommendations for the seekers
+app.get('/dashboard/seekerdashboard/jobs', async (c) => {
+  try {
+
+    const { data: jobRecommendations, error: fetchError } = await supabase
+      .from('job_postings')
+      .select();
+
+    if (fetchError) {
+      console.log("Couldn't fetch job recommendations:", fetchError.message);
+      return c.json({ error: fetchError.message }, 400);
+    }
+
+    return c.json({ jobRecommendations });
+  } catch (error) {
+    console.error("Error during job recommendations fetch:", error);
+    return c.json({ error: error.message }, 500);
   }
 });
 
